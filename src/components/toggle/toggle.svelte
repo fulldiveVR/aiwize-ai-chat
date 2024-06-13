@@ -6,10 +6,11 @@
 </script>
 
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte'
+
   export let checked: boolean = false
   export let disabled: boolean = false
   export let size: Sizes = 'medium'
-  export let onChange: (detail: { checked: boolean }) => void = undefined
 
   let thumb: HTMLElement
 
@@ -17,49 +18,44 @@
   let dragStartX: number | undefined
   let dragOffsetX: number = 0
 
-  const change = (newValue?: boolean) => {
+  const dispatch = createEventDispatcher<{
+    change: { checked: boolean }
+  }>()
+
+  const onChange = (newValue?: boolean) => {
     if (newValue === undefined) newValue = !checked
     checked = newValue
-    onChange?.({ checked: newValue })
+    dispatch('change', { checked })
   }
+</script>
 
-  function finishDrag() {
+<svelte:window
+  on:mouseup={() => {
     // If we didn't receive a mouse down, there's nothing to do.
     if (dragStartX === undefined) return
 
     // If we didn't drag just toggle the state.
     if (dragOffsetX === 0) {
-      change()
+      onChange()
     } else {
-      if (dragOffsetX > DRAG_AMOUNT_TO_CHANGE && !checked) change(true)
-      if (dragOffsetX < -DRAG_AMOUNT_TO_CHANGE && checked) change(false)
+      if (dragOffsetX > DRAG_AMOUNT_TO_CHANGE && !checked) onChange(true)
+      if (dragOffsetX < -DRAG_AMOUNT_TO_CHANGE && checked) onChange(false)
     }
 
     // Reset the dragging attributes.
     dragStartX = undefined
     dragOffsetX = 0
-  }
-</script>
-
-<svelte:window
-  on:mouseup={finishDrag}
+  }}
   on:mousemove={(e) => {
     if (dragStartX === undefined) return
     dragOffsetX = e.clientX - dragStartX
-
-    if (document.documentElement.dir === 'rtl') dragOffsetX = -dragOffsetX
-
-    // The mouse was released but we didn't get a mouseup event
-    if (e.buttons === 0) {
-      finishDrag()
-    }
   }}
 />
 
 <label class={`leo-toggle size-${size}`}>
   <button
     on:mousedown={(e) => {
-      if (disabled || e.button !== 0) return
+      if (disabled) return
 
       handledClick = true
       dragStartX = e.clientX
@@ -70,7 +66,7 @@
         return
       }
 
-      change()
+      onChange()
     }}
     {disabled}
     role="switch"
@@ -84,7 +80,7 @@
       style:--drag-offset="{dragOffsetX}px"
     >
       <div class="on-icon">
-        <slot name="on-icon" />
+        <slot name="on-icon"/>
       </div>
     </div>
   </button>
@@ -92,25 +88,11 @@
 </label>
 
 <style lang="scss">
-  :global(:root) {
-    --leo-direction: 1;
-  }
-
-  :global(:root[dir='rtl']) {
-    --leo-direction: -1;
-  }
-
   :host {
     display: inline-block;
   }
 
   .leo-toggle {
-    --duration: var(--leo-toggle-transition-duration, 0.12s);
-    @media (prefers-reduced-motion) {
-      --duration: 0;
-    }
-
-    --icon-size: var(--leo-icon-size, 20px);
     --width: var(--leo-toggle-width, 52px);
     --height: var(--leo-toggle-height, 32px);
     --padding: var(--leo-toggle-padding, var(--leo-spacing-s));
@@ -138,7 +120,6 @@
     &.size-small {
       --width: 40px;
       --height: 24px;
-      --icon-size: var(--leo-icon-size, 12px);
     }
 
     @theme (dark) {
@@ -158,15 +139,13 @@
   }
 
   .leo-toggle button {
-    --leo-icon-size: var(--icon-size);
-
     all: unset;
     background: var(--unchecked-color);
-    width: calc(var(--width) - 2 * var(--padding));
-    height: calc(var(--height) - 2 * var(--padding));
+    width: var(--width);
+    height: var(--height);
     border-radius: var(--leo-radius-full);
     padding: var(--padding);
-    transition: background-color var(--duration) ease-in-out;
+    transition: background-color 0.2s ease-in-out;
     flex-shrink: 0;
 
     &:disabled {
@@ -175,6 +154,11 @@
       > .thumb {
         background: var(--thumb-disabled-color);
       }
+    }
+
+    &:focus-visible:not(:disabled) {
+      box-shadow: 0px 0px 0px 1.5px rgba(255, 255, 255, 0.5),
+        0px 0px 4px 2px #423eee;
     }
 
     &:hover:not(:disabled) {
@@ -190,38 +174,34 @@
       --checked-thumb-offset: calc(var(--width) - var(--height));
       --thumb-offset: var(--unchecked-thumb-offset);
       --drag-offset: 0;
-      --thumb-position: calc(
-        max(
-            min(
-              var(--checked-thumb-offset),
-              calc(var(--thumb-offset) + var(--drag-offset))
-            ),
-            var(--unchecked-thumb-offset)
-          ) * var(--leo-direction)
+      --thumb-position: max(
+        min(
+          var(--checked-thumb-offset),
+          calc(var(--thumb-offset) + var(--drag-offset))
+        ),
+        var(--unchecked-thumb-offset)
       );
 
       height: 100%;
       aspect-ratio: 1/1;
       background: white;
       border-radius: var(--leo-radius-full);
-      transition:
-        transform var(--duration) ease-in-out,
-        color var(--duration) ease-in-out;
+      transition: transform 0.2s ease-in-out, color 0.2s ease-in-out;
 
       transform: translate(var(--thumb-position), 0);
 
       &.dragging {
-        transition:
-          transform 0s ease-in-out,
-          color var(--duration) ease-in-out;
+        transition: transform 0s ease-in-out, color 0.2s ease-in-out;
       }
 
       display: flex;
       align-items: center;
       justify-content: center;
 
+      box-shadow: var(--leo-effect-elevation-02);
+
       .on-icon {
-        transition: opacity var(--duration) ease-in-out;
+        transition: opacity 0.2s ease-in-out;
         display: flex;
         opacity: 0;
       }

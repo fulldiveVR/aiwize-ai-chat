@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # this lets us work in the actual repository
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       # if the folder named "tokens" does not exist, create it
       - name: mkdir "tokens" directory
         # change tokens here (and in line 32) if you want to use a differently named folder
@@ -22,7 +22,7 @@ jobs:
       # this creates a json file from the stringified json from the request body
       - name: create json from request body
         id: create-json
-        uses: jsdaniell/create-json@b8e77fa01397ca39cc4a6198cc29a3be5481afef # v1.2.3
+        uses: jsdaniell/create-json@6c509494d7b009b842fb0a158852ba244920bc38 # v1.2.2
         with:
           # it uses the name from your settings that was send as then tokenFileName parameter
           name: 'design-tokens-example.json'

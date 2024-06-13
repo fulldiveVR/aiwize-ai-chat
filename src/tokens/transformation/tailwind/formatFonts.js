@@ -14,6 +14,9 @@ module.exports = ({ dictionary }) => {
       fontClass += `-${t.attributes.state}`
     }
 
+    // Remove "desktop" for typography
+    fontClass = fontClass.replace(/desktop-/gm, '')
+
     fontClasses.set(fontClass, t.value)
   })
 

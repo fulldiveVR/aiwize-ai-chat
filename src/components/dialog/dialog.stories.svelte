@@ -52,7 +52,7 @@
 />
 
 <Template let:args>
-  <Button isDisabled={isOpen} onClick={() => (isOpen = true)}
+  <Button isDisabled={isOpen} on:click={() => (isOpen = true)}
     >Show Dialog</Button
   >
   <Dialog {...args} bind:isOpen>
@@ -80,45 +80,45 @@
 <Story name="Slots" let:args>
   <SlotInfo description="The dialog supports several slots">
     <Slot name="default" explanation="The content of the dialog">
-      <Button onClick={() => (openDialog = 'default')}>Show Dialog</Button>
+      <Button on:click={() => (openDialog = 'default')}>Show Dialog</Button>
       <Dialog
         {...args}
         isOpen={openDialog === 'default'}
-        onClose={() => (openDialog = undefined)}
+        on:close={() => (openDialog = undefined)}
       >
         This is the dialog content
       </Dialog>
     </Slot>
     <Slot name="title" explanation="The title of the dialog">
-      <Button onClick={() => (openDialog = 'title')}>Show Title Dialog</Button>
+      <Button on:click={() => (openDialog = 'title')}>Show Title Dialog</Button>
       <Dialog
         {...args}
         isOpen={openDialog === 'title'}
-        onClose={() => (openDialog = undefined)}
+        on:close={() => (openDialog = undefined)}
       >
         <div slot="title">Dialog Title</div>
       </Dialog>
     </Slot>
     <Slot name="subtitle" explanation="The subtitle of the dialog">
-      <Button onClick={() => (openDialog = 'subtitle')}
+      <Button on:click={() => (openDialog = 'subtitle')}
         >Show Subtitle Dialog</Button
       >
       <Dialog
         {...args}
         isOpen={openDialog === 'subtitle'}
-        onClose={() => (openDialog = undefined)}
+        on:close={() => (openDialog = undefined)}
       >
         <div slot="subtitle">Dialog Subtitle</div>
       </Dialog>
     </Slot>
     <Slot name="actions" explanation="The actions for the dialog">
-      <Button onClick={() => (openDialog = 'actions')}
+      <Button on:click={() => (openDialog = 'actions')}
         >Show Actions Dialog</Button
       >
       <Dialog
         {...args}
         isOpen={openDialog === 'actions'}
-        onClose={() => (openDialog = undefined)}
+        on:close={() => (openDialog = undefined)}
       >
         Dialog body
         <div slot="actions">

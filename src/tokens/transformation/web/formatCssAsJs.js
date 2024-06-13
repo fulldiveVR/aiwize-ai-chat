@@ -106,7 +106,14 @@ function formattedVariables(properties) {
 module.exports = ({ dictionary, file }) => {
   let fileContents = fileHeader({ file }) + '\n'
 
-  const themeObject = formattedVariables(dictionary.properties)
+  // The `desktop` segment is ignored in our property names, so make sure we
+  // remove it from the properties, or this won't match up with the actual CSS
+  // variables.
+  const properties = removeSegmentFromNameInAllTokens(
+    dictionary.properties,
+    'desktop'
+  )
+  const themeObject = formattedVariables(properties)
 
   // Separate out each main property, to allow for tree shaking and easy type-to-complete
   // imports in code editors.

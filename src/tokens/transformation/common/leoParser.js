@@ -2,40 +2,14 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // you can obtain one at http://mozilla.org/MPL/2.0/.
-const { applyToTokens, removeKeyFromObject } = require('../../utils')
-const universalVariables = require('../../universal.variables.json')
+const { removeKeyFromObject, applyToTokens } = require('../../utils')
+const fs = require('fs')
+const variables = require('../../universal.variables.json')
 const { TinyColor } = require('@ctrl/tinycolor')
-
-/**
- * Transforms an effect to use variable references, rather than a hardcoded
- * color. Unfortunately we need to do this because style-dictionary won't
- * export variable references in effects.
- * At the moment, we just whitelist a few color groups.
- * @param {*} layerVariables
- * @returns {Array}
- */
-function getEffectColorsFromLayer(layerVariables) {
-  const allowedGroups = ['elevation', 'primary', 'secondary']
-  return allowedGroups
-    .map((g) =>
-      Object.entries(layerVariables.color?.['---light']?.[g] || {}).map(
-        ([key, value]) => [
-          `${g}.${key}`,
-          new TinyColor(value.value).toHex8String()
-        ]
-      )
-    )
-    .flat()
-}
 
 module.exports = {
   pattern: /\.json$/,
   parse: ({ filePath, contents }) => {
-    let layerVariables = {}
-    try {
-      layerVariables = require(`${filePath.split('.')[0]}.variables.json`)
-    } catch {}
-
     // Replace emojies, e.g. '🌚 dark' :-)
     contents = contents
       .replace(
@@ -51,9 +25,19 @@ module.exports = {
     if (contents.gradient?.gradient)
       contents.gradient = contents.gradient.gradient
 
-    // Get variable references for effects, rather than hardcoded colors
-    const universalEffectColors = getEffectColorsFromLayer(universalVariables)
-    const layerEffectColors = getEffectColorsFromLayer(layerVariables)
+    // Transforms an effect to use variable references, rather than a hardcoded
+    // color. Unfortunately we need to do this because style-dictionary won't
+    // export variable references in effects.
+    // At the moment, we just whitelist a few color groups.
+    const allowedGroups = ['elevation', 'primary', 'secondary']
+    const effectColors = allowedGroups
+      .map((g) =>
+        Object.entries(variables.color['---light'][g]).map(([key, value]) => [
+          `${g}.${key}`,
+          new TinyColor(value.value).toHex8String()
+        ])
+      )
+      .flat()
 
     const transformEffect = (effect) => {
       const value = Array.isArray(effect.value) ? effect.value : [effect.value]
@@ -61,14 +45,7 @@ module.exports = {
         // Some entries are null in the style-dictionary export.
         if (!entry) continue
         const color = new TinyColor(entry.color).toHex8String()
-        /**
-         * When matching token names with values, we first need to check
-         * to see if the value exists in the layer specific variables
-         * and then look in the universal variables.
-         */
-        const match =
-          layerEffectColors.find(([key, value]) => value === color) ||
-          universalEffectColors.find(([key, value]) => value === color)
+        const match = effectColors.find(([key, value]) => value === color)
         if (match) {
           entry.color = `$color.${match[0]}`
         }
@@ -96,13 +73,7 @@ module.exports = {
          * at this level.
          */
         if (
-          [
-            'focus state',
-            'notificationbackdrop',
-            'url bar shadow',
-            'active tab shadow',
-            'stroke+shadow'
-          ].includes(type) &&
+          ['focus state', 'notificationbackdrop'].includes(type) &&
           typeValue &&
           !typeValue.type
         ) {
@@ -123,12 +94,6 @@ module.exports = {
           if (['gradient'].includes(type) && itemValue && !itemValue.type) {
             contents[category][type][item] = groupValues(itemValue)
           }
-        }
-
-        // Remove token types which shouldn't be included in final names
-        const tokenPrefixesToStrip = ['desktop', 'browser', 'marketing']
-        if (tokenPrefixesToStrip.includes(type)) {
-          contents[category] = removeKeyFromObject(contents[category], type)
         }
       }
     }

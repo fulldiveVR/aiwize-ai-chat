@@ -6,7 +6,8 @@ import {
   useCallback,
   type ForwardedRef,
   type PropsWithChildren,
-  useState
+  useState,
+  type DOMAttributes
 } from 'react'
 import type { SvelteComponent } from 'svelte'
 
@@ -23,6 +24,9 @@ export type IntrinsicProps =
 export type SvelteProps<T> = T extends SvelteComponent<infer Props, any, any>
   ? Props
   : {}
+export type SvelteEvents<T> = T extends SvelteComponent<any, infer Events, any>
+  ? Events
+  : {}
 
 // We introduce a custom ref type as some of the Svelte type definitions don't
 // play nice with React.ForwardRef.
@@ -36,9 +40,8 @@ type Ref<T> =
         | undefined
         | null
     }
-export type ReactProps<Props> = Props & {
+export type ReactProps<Props, Events> = Props & {
   ref?: Ref<Props>
-  slot?: string
 } & {
   // Note: The div here isn't important because all props in intrinsicProps are
   // available on all elements. We just want to make sure we have the correct
@@ -46,6 +49,18 @@ export type ReactProps<Props> = Props & {
   [P in IntrinsicProps]?: Omit<JSX.IntrinsicElements, 'ref'>['div'][P]
 }
 
+type EventPropsNames = keyof DOMAttributes<unknown>
+
+type EventPropsNameMap = {
+  [P in EventPropsNames as Lowercase<P>]: P
+}
+export type EventProps<T> = {
+  [P in keyof T as P extends Lowercase<EventPropsNames>
+    ? EventPropsNameMap[P]
+    : P extends `on${infer EventName}`
+      ? `on${Capitalize<EventName>}`
+      : P]: T[P]
+}
 const useEventHandlers = (props: any) => {
   const [el, setEl] = useState<HTMLElement>()
   const lastValue = useRef<{ [key: string]: (...args: any[]) => any }>({})
@@ -87,7 +102,6 @@ const useEventHandlers = (props: any) => {
         // Cleanup
         for (const [event, listener] of Object.entries(lastValue.current)) {
           oldValue.removeEventListener(event, listener)
-          delete lastValue.current[event]
         }
       }
       return el

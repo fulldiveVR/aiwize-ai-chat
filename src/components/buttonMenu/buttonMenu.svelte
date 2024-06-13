@@ -14,35 +14,27 @@
 </script>
 
 <script lang="ts">
-  import Menu, { type CloseEvent } from '../menu/menu.svelte'
-  import type { Strategy } from '@floating-ui/dom'
+  import Menu from '../menu/menu.svelte'
 
-  export let isOpen: boolean | undefined = undefined
-  export let onClose: CloseEvent = undefined
-  export let onChange: (e: { isOpen: boolean }) => void = undefined
-  export let positionStrategy: Strategy = 'absolute'
-
+  export let isOpen = false
   let anchor: HTMLElement
-
-  $: isOpenInternal = isOpen ?? false
-
-  const toggle = () => {
-    const toggleTo = !isOpenInternal
-    if (isOpen === undefined) isOpenInternal = toggleTo
-    onChange?.({ isOpen: toggleTo })
-  }
 </script>
 
 <div class="leo-button-menu">
-  <!--
+  <!-- 
     We disable this check - the menu is triggered by the contained element
     firing a `click` event. This may be triggered with a keypress or click.
   -->
   <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <div bind:this={anchor} on:click|stopPropagation={toggle}>
+  <div bind:this={anchor} on:click|stopPropagation={() => (isOpen = !isOpen)}>
     <slot name="anchor-content">Click</slot>
   </div>
-  <Menu {positionStrategy} isOpen={isOpenInternal} target={anchor} {onClose}>
+  <Menu
+    bind:isOpen
+    target={anchor}
+    on:click={() => (isOpen = !isOpen)}
+    on:close
+  >
     <slot />
   </Menu>
 </div>

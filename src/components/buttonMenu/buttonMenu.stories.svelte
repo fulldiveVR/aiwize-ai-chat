@@ -18,9 +18,6 @@
   argTypes={{
     '--leo-menu-control-width': {
       description: '(readonly): Computed width of menu control'
-    },
-    '--leo-menu-max-height' : {
-      description: 'user controlled max height'
     }
   }}
 />

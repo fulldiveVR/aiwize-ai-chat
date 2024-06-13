@@ -18,38 +18,40 @@
       }
     }
   }
+</script>
 
-  export interface CloseEventDetail {
+<script lang="ts">
+  import { createEventDispatcher } from 'svelte'
+  import clickOutside from '../../svelteDirectives/clickOutside'
+  import Floating from '../floating/floating.svelte'
+  import { size as sizeMiddleware, type Strategy } from '@floating-ui/dom'
+
+  interface CloseEventDetail {
     originalEvent: Event
     reason: 'select' | 'blur' | 'cancel'
   }
 
-  export type CloseEvent = (detail: CloseEventDetail) => boolean | undefined | void
-
-  export interface SelectItemEventDetail {
+  interface SelectItemEventDetail {
     value: string | undefined
   }
-</script>
-
-<script lang="ts">
-  import clickOutside from '../../svelteDirectives/clickOutside'
-  import Floating from '../floating/floating.svelte'
-  import { size as sizeMiddleware, type Strategy } from '@floating-ui/dom'
 
   export let isOpen = false
   export let target: HTMLElement | undefined = undefined
   export let currentValue: string | undefined = undefined
   export let positionStrategy: Strategy = 'absolute'
-  export let onClose: CloseEvent =
-    undefined
-  export let onSelectItem: (detail: SelectItemEventDetail) => void = undefined
+
+  const dispatch = createEventDispatcher<{
+    close: CloseEventDetail
+    'select-item': SelectItemEventDetail
+  }>()
 
   function dispatchClose(
     originalEvent: Event,
     reason: CloseEventDetail['reason']
   ) {
-    // Allow event handlers to cancel closing the dropdown by returning false
-    if (onClose?.({ originalEvent, reason }) !== false) {
+    // Allow event handlers to cancel closing the dropdown by calling
+    // |preventDefault|.
+    if (dispatch('close', { originalEvent, reason }, { cancelable: true })) {
       isOpen = false
     }
   }
@@ -120,7 +122,7 @@
     if (item.tagName === 'LEO-OPTION') {
       currentValue = getValue(item)
 
-      onSelectItem?.({
+      dispatch('select-item', {
         value: currentValue
       })
     }
@@ -173,7 +175,7 @@
   }
 
   function applySizeMiddleware({ rects, availableHeight }) {
-    popup.style.maxHeight = `var(--leo-menu-max-height, calc(${availableHeight}px - var(--leo-spacing-xl)))`
+    popup.style.maxHeight = `calc(${availableHeight}px - var(--leo-spacing-xl))`
   }
 
   let floatingMiddleware = [sizeMiddleware({ apply: applySizeMiddleware })]

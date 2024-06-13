@@ -6,15 +6,12 @@ const postcss = require('postcss')
 const cssFiles = ['variables.css']
 
 const genPluginFilePath = (file, config) =>
-  join(config.buildPath, config.preset, 'plugins', `_${file}.ts`)
+  join(config.buildPath, 'plugins', `_${file}.ts`)
 
 module.exports = {
   do: function (dictionary, config) {
     cssFiles.forEach((file) => {
-      const css = readFileSync(
-        join(config.buildPath, config.preset, file),
-        'utf8'
-      )
+      const css = readFileSync(join(config.buildPath, file), 'utf8')
       const root = postcss.parse(css)
       const cssAsJs = postcssJs.objectify(root)
 

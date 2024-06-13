@@ -6,7 +6,7 @@
   <div class="item-icon" class:no-icon={!$$slots['icon-before']}>
     <slot name="icon-before" />
   </div>
-  <div class="content">
+  <div>
     <slot />
   </div>
   <div class="item-icon" class:no-icon={!$$slots['icon-after']}>
@@ -50,8 +50,12 @@
       }
     }
 
-    & .content {
-      padding: 0 var(--leo-control-item-icon-gap);
+    & .item-icon:first-of-type {
+      padding-right: var(--leo-control-item-icon-gap);
+    }
+
+    & .item-icon:last-of-type {
+      padding-left: var(--leo-control-item-icon-gap);
     }
   }
 </style>

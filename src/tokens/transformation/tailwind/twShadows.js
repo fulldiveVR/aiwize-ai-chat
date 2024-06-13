@@ -14,21 +14,11 @@ module.exports = {
   }
 }
 
-/**
- * @param {string} colorString
- * @returns {string}
- */
-const formatColorForTw = (colorString) => {
-  const formattedColor = formatColor('tw', colorString)
-  return colorString.startsWith('$')
-    ? `rgba(${formattedColor}, 1)`
-    : formattedColor
-}
-
 function formatBoxShadow(value) {
   return `${value.shadowType === 'innerShadow' ? 'inset ' : ''}${
     value.offsetX
-  }px ${value.offsetY}px ${value.radius}px ${value.spread}px ${formatColorForTw(
+  }px ${value.offsetY}px ${value.radius}px ${value.spread}px ${formatColor(
+    'tw',
     value.color
   )}`
 }
@@ -36,5 +26,5 @@ function formatBoxShadow(value) {
 function formatDropShadow(value) {
   return `${value.shadowType === 'innerShadow' ? 'inset ' : ''}${
     value.offsetX
-  }px ${value.offsetY}px ${value.radius}px ${formatColorForTw(value.color)}`
+  }px ${value.offsetY}px ${value.radius}px ${formatColor('tw', value.color)}`
 }

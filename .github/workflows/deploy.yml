@@ -27,7 +27,7 @@ jobs:
     steps:
       - name: Download artifact
         id: download-artifact
-        uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe # v3.1.4
+        uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d # v3.0.0
         with:
           workflow_conclusion: success
           run_id: ${{ github.event.workflow_run.id }}
@@ -54,10 +54,10 @@ jobs:
           aws configure set default.s3.max_concurrent_requests 200
           aws configure set default.s3.max_queue_size 10000
           if [[ -z ${PR_NUMBER} ]]; then # non PR
-            aws s3 sync . "s3://${S3_BUCKET_NAME}/" --delete --exclude 'pr-*/*' --exclude '*.old.css' --exclude '*.diff'
+            aws s3 sync . "s3://${S3_BUCKET_NAME}/" --delete --exclude 'pr-*/*'
           else
-            aws s3 sync . "s3://${S3_BUCKET_NAME}/pr-${PR_NUMBER}/commit-${HEAD_SHA}/" --delete --exclude '*.old.css' --exclude '*.diff'
-            aws s3 sync . "s3://${S3_BUCKET_NAME}/pr-${PR_NUMBER}/" --delete --exclude 'commit-*/*' --exclude '*.old.css' --exclude '*.diff'
+            aws s3 sync . "s3://${S3_BUCKET_NAME}/pr-${PR_NUMBER}/commit-${HEAD_SHA}/" --delete
+            aws s3 sync . "s3://${S3_BUCKET_NAME}/pr-${PR_NUMBER}/" --delete --exclude 'commit-*/*'
           fi
           echo "::endgroup::"
 
@@ -67,16 +67,7 @@ jobs:
         with:
           script: |
             const fs = require('fs/promises')
-            const path = require('path')
-            const cssDiffDir = './artifact/tokens/css'
-            const fileSizes = await fs.readFile(path.join(cssDiffDir, 'file-sizes.diff'), 'utf-8')
-            const diffFilePaths = (await fs.readdir(cssDiffDir)).filter(f => f.startsWith('variables') && f.endsWith('.diff'))
-            const diffs = await Promise.all(diffFilePaths.map(async f => {
-              return {
-                file: f,
-                diff: await fs.readFile(path.join(cssDiffDir, f), 'utf-8')
-              }
-            }))
+            const diff = await fs.readFile('./artifact/tokens/css/variables.diff', 'utf-8')
             await github.rest.issues.createComment({
               issue_number: ${{ github.event.workflow_run.pull_requests[0].number }},
               owner: context.repo.owner,
@@ -86,16 +77,12 @@ jobs:
             ✅ PR tip preview: https://${{ github.event.workflow_run.pull_requests[0].number }}.pr.nala.bravesoftware.com/
             ✅ Commit preview: https://${{ github.event.workflow_run.pull_requests[0].number }}.pr.nala.bravesoftware.com/commit-${{ github.event.workflow_run.head_sha }}/
 
-            \`\`\`diff
-            ${fileSizes}
-            \`\`\`
-
-            ${diffs.map(({file, diff}) => `<details>
-            <summary>Variables Diff: ${file}</summary>
+            <details>
+            <summary>Variables Diff</summary>
 
             \`\`\`diff
             ${diff}
             \`\`\`
 
-            </details>`).join('\n')}`
+            </details>`
             })

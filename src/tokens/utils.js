@@ -49,23 +49,7 @@ function applyToTokens(root, type, apply) {
   }
 }
 
-/**
- * This is a tagged template literal to format variable
- * definitions, like:
- * @media (prefers-color-scheme: light) {
- *   :root {
- *     --leo-elevation-xl: 36px;
- *     --leo-elevation-l: 24px;
- *    ...
- *   }
- * }
- */
-function varDefFormat(strings, vars) {
-  return [strings[0], vars, strings[1]].join('\n')
-}
-
 module.exports = {
   removeKeyFromObject,
-  applyToTokens,
-  varDefFormat
+  applyToTokens
 }

@@ -9,17 +9,13 @@ const {
 
 module.exports = {
   theme: {
-    boxShadow: {},
-    borderRadius: {},
-    spacing: {},
-    dropShadow: {},
-    colors: {},
+    fontSize: {},
+    boxShadow,
+    borderRadius,
+    spacing,
+    dropShadow,
+    colors: colors,
     extend: {
-      boxShadow,
-      borderRadius,
-      spacing,
-      dropShadow,
-      colors: colors,
       backgroundImage: {
         ...gradients
       }

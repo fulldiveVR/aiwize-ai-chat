@@ -26,9 +26,9 @@
     </svelte:element>
   {/if}
 
-  {#each filteredTokens as [name, token]}
-    {#if typeof token === 'string'}
-      <div class="font-group">
+  {#if typeof filteredTokens[0][1] === 'string'}
+    <div class="font-group">
+      {#each filteredTokens as [name, token]}
         <Copiable text={token}>
           <div class="font-sample">
             <svelte:element
@@ -41,11 +41,17 @@
             <span style="font: {token}">Keep it bravey.</span>
           </div>
         </Copiable>
-      </div>
-    {:else}
-      <svelte:self {name} tokens={token} level={level + 1} />
-    {/if}
-  {/each}
+      {/each}
+    </div>
+  {:else}
+    {#each filteredTokens as [name, tokens]}
+      {#if typeof tokens !== 'string'}
+        <svelte:self {name} {tokens} level={level + 1} />
+      {:else if ['white', 'black'].includes(name)}
+        <svelte:self {name} tokens={{ [name]: tokens }} level={level + 1} />
+      {/if}
+    {/each}
+  {/if}
 </svelte:element>
 
 <style>

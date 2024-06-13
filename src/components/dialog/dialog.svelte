@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte'
   import type { SvelteHTMLElements } from 'svelte/elements'
   import { scale } from 'svelte/transition'
   import Button from '../button/button.svelte'
@@ -15,8 +16,6 @@
     escapeCloses?: boolean
     backdropClickCloses?: boolean
     animate?: boolean
-    onClose?: () => void
-    onBack?: () => void
   }
 
   export let isOpen = false
@@ -28,8 +27,10 @@
   export let backdropClickCloses = true
   export let animate = true
 
-  export let onClose: () => void = undefined
-  export let onBack: () => void = undefined
+  const dispatch = createEventDispatcher<{
+    close: undefined
+    back: undefined
+  }>()
 
   let dialog: HTMLDialogElement
   $: {
@@ -40,7 +41,7 @@
 
   const close = () => {
     isOpen = false
-    onClose?.()
+    dispatch('close')
   }
 </script>
 
@@ -65,7 +66,7 @@
   >
     {#if showClose}
       <div class="close-button">
-        <Button kind="plain-faint" onClick={close}>
+        <Button kind="plain-faint" on:click={close}>
           <Icon name="close" />
         </Button>
       </div>
@@ -76,7 +77,7 @@
           <div class="title-row">
             {#if showBack}
               <div class="back-button">
-                <Button kind="plain-faint" onClick={onBack}>
+                <Button kind="plain-faint" on:click={() => dispatch('back')}>
                   <Icon name="arrow-left" />
                 </Button>
               </div>
@@ -181,7 +182,7 @@
 
   .leo-dialog .close-button {
     position: absolute;
-    inset-inline-end: var(--leo-spacing-xl);
+    right: var(--leo-spacing-xl);
     top: var(--leo-spacing-xl);
   }
 

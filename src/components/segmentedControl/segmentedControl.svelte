@@ -4,18 +4,19 @@
 </script>
 
 <script lang="ts">
-  import { onMount } from 'svelte'
+  import { createEventDispatcher, onMount } from 'svelte'
 
   export let value: string | undefined = undefined
   export let size: Size = 'default'
-
-  export let onChange: (detail: { value: string | undefined }) => void =
-    undefined
 
   let segmentedControl: HTMLDivElement
 
   let pillWidth: number
   let pillPosition: number
+
+  const dispatch = createEventDispatcher<{
+    'change': { value: string | undefined }
+  }>()
 
   function getValue(e: Element) {
     // If the option element doesn't have a value, fallback to using the text
@@ -32,28 +33,17 @@
       []
   ) as HTMLElement[]
 
-  function setPill(item: HTMLElement) {
-    pillWidth = item.getBoundingClientRect().width
-    pillPosition = item.offsetLeft
-  }
-
-  const itemResizeObserver = new ResizeObserver((entries) => {
-    for (const entry of entries) {
-      setPill(entry.target as HTMLElement)
-    }
-  })
-
   $: {
     for (const controlItem of controlItems) {
       controlItem.setAttribute('role', 'option')
 
       if (value === getValue(controlItem)) {
         controlItem.setAttribute('aria-selected', '')
-        itemResizeObserver.observe(controlItem)
-      } else {
-        controlItem.removeAttribute('aria-selected')
-        itemResizeObserver.unobserve(controlItem)
-      }
+        window.requestAnimationFrame(() => {
+          pillWidth = controlItem.getBoundingClientRect().width
+          pillPosition = controlItem.offsetLeft
+        })
+      } else controlItem.removeAttribute('aria-selected')
     }
   }
 
@@ -67,7 +57,7 @@
 
     value = getValue(item)
 
-    onChange?.({ value })
+    dispatch('change', { value })
   }
 
   let pill: HTMLDivElement
@@ -114,8 +104,7 @@
     --bg: var(--leo-color-container-highlight);
     --control-padding: var(--leo-control-padding, var(--leo-spacing-s));
     --gap: var(--leo-spacing-s);
-    --control-height: 44px;
-    --radius: var(--leo-radius-xl);
+    --control-height: 48px;
 
     --leo-control-item-padding: var(--leo-spacing-xl);
     --leo-control-item-icon-gap: var(--leo-spacing-m);
@@ -130,12 +119,11 @@
     padding: var(--control-padding);
     gap: var(--leo-segmented-control-gap, var(--gap));
     height: var(--leo-segmented-control-height, var(--control-height));
-    border-radius: var(--leo-segmented-control-radius, var(--radius));
+    border-radius: var(--leo-segmented-control-height, var(--control-height));
 
     &.size-small {
       --leo-icon-size: var(--leo-icon-s);
-      --control-height: 36px;
-      --radius: var(--leo-radius-xl);
+      --control-height: 40px;
       --leo-control-item-padding: var(--leo-spacing-l);
       --leo-control-item-font: var(--leo-font-components-button-small);
     }
@@ -145,7 +133,6 @@
       --control-padding: var(--leo-control-padding, var(--leo-spacing-xs));
       --gap: var(--leo-spacing-xs);
       --control-height: 28px;
-      --radius: var(--leo-radius-m);
       --leo-control-item-padding: var(--leo-spacing-m);
       --leo-control-item-font: var(--leo-font-components-button-small);
     }
@@ -155,8 +142,7 @@
       position: absolute;
       height: calc(100% - (var(--control-padding) * 2));
       min-width: var(--control-height);
-      border-radius: calc(var(--radius) - var(--control-padding));
-      box-shadow: var(--leo-effect-elevation-01);
+      border-radius: calc(var(--control-height) - var(--control-padding));
       transition:
         width 0.2s cubic-bezier(0.22, 1, 0.36, 1),
         left 0.4s cubic-bezier(0.22, 1, 0.36, 1);
@@ -167,13 +153,16 @@
       --leo-control-item-icon-color: var(--leo-color-icon-default);
       --leo-control-item-color: var(--leo-color-text-secondary);
       --leo-control-item-background: transparent;
-      --leo-control-item-radius: calc(var(--radius) - var(--control-padding));
+      --leo-control-item-radius: calc(
+        var(--control-height) - var(--control-padding)
+      );
     }
 
     :where(&:not(.transitioning)) > :global .leo-control-item:hover,
     :where(&:not(.transitioning)) > :global ::slotted(leo-controlitem:hover) {
       --leo-control-item-background: var(--leo-color-page-background);
       --leo-control-item-color: var(--leo-color-text-primary);
+      --leo-control-item-shadow: var(--leo-effect-elevation-01);
     }
 
     :where(&) > :global .leo-control-item:focus-visible,

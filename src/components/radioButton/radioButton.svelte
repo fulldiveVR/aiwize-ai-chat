@@ -11,6 +11,7 @@
 </script>
 
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte'
   import { fade, scale } from 'svelte/transition'
   import Icon from '../icon/icon.svelte'
   import type { ChangeEventHandler } from 'svelte/elements'
@@ -21,9 +22,10 @@
   export let size: Sizes = 'normal'
   export let isDisabled = false
 
-  export let onChange: (detail: { value: string | number | any }) => void
-
   const tagName = 'leo-radiobutton'
+  const dispatch = createEventDispatcher<{
+    change: { value: string | number | any }
+  }>()
 
   const changed: ChangeEventHandler<HTMLInputElement> = (e) => {
     if (isDisabled || !e.currentTarget?.checked) return
@@ -44,7 +46,7 @@
     }
 
     currentValue = value
-    onChange?.({ value })
+    dispatch('change', { value })
   }
 </script>
 
@@ -160,8 +162,7 @@
     }
 
     &:has(input:focus-visible) {
-      box-shadow:
-        0px 0px 0px 1.5px rgba(255, 255, 255, 0.5),
+      box-shadow: 0px 0px 0px 1.5px rgba(255, 255, 255, 0.5),
         0px 0px 4px 2px #423eee;
     }
   }

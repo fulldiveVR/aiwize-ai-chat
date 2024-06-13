@@ -39,21 +39,8 @@
       description: 'The icon color used by the control',
       control: 'color'
     },
-    '--leo-control-color': {
-      description:
-        'The color of the control, which other colors are derived from',
-      control: 'color'
-    },
-    '--leo-control-text-color': {
-      description: 'The color of the text in the control',
-      control: 'color'
-    },
     '--leo-control-label-gap': {
       description: 'The gap between the label and the control',
-      type: 'string'
-    },
-    '--leo-control-focus-effect': {
-      description: 'The focus effect for the control',
       type: 'string'
     }
   }
@@ -69,10 +56,6 @@
   export let showFocusOutline: boolean = false
   export let error = false
 
-  // Unfortunately, we can't conditionally render slots in Svelte, so we provide
-  // a flag so the consumer can let us know if they're actually setting a label.
-  export let renderLabel: boolean
-
   export let controlElement: HTMLDivElement = undefined
 </script>
 
@@ -86,11 +69,9 @@
   class:error
   aria-disabled={disabled}
 >
-  {#if $$slots.label && renderLabel}
-    <div class="label-row">
-      <slot name="label" />{#if required}<span class="required-indicator">*</span>{/if}
-    </div>
-  {/if}
+  <div class="label-row">
+    <slot name="label" />{#if required}<span class="required-indicator">*</span>{/if}
+  </div>
   <div class="control" bind:this={controlElement}>
     <div class="container">
       <div class="extra-content">
@@ -107,12 +88,8 @@
 
 <style lang="scss">
   .leo-control {
-    --foreground: var(--leo-color-text-primary);
-    --base: var(--leo-color-container-background);
-    --primary: var(--leo-control-color, var(--base));
-
-    --radius: var(--leo-control-radius, var(--leo-radius-m));
-    --padding: var(--leo-control-padding, 10px 7px);
+    --radius: var(--leo-control-radius, var(--leo-spacing-m));
+    --padding: var(--leo-control-padding, 9px);
     --font: var(--leo-control-font, var(--leo-font-default-regular));
     --leo-icon-size: var(--leo-control-icon-size, 20px);
     --leo-icon-color: var(
@@ -122,20 +99,18 @@
     --gap: var(--leo-control-label-gap, var(--leo-spacing-s));
     --direction: var(--leo-control-label-direction, column);
 
-    --color: var(--leo-control-text-color, var(--leo-color-text-primary));
+    --color: var(--leo-color-text-primary);
     --color-hover: var(--color);
     --color-focus: var(--color);
 
-    --background: var(--primary);
+    --background: var(--leo-color-container-background);
     --background-hover: var(--background);
     --background-focus: var(--background);
 
     --shadow: ;
     --shadow-hover: var(--shadow);
-    --shadow-focus: var(
-      --leo-control-focus-effect,
-      var(--leo-effect-focus-state)
-    );
+    --shadow-focus: 0px 0px 0px 2px #423eee,
+      0px 0px 0px 1px rgba(255, 255, 255, 0.3);
 
     --border-color: transparent;
     --border-color-hover: transparent;
@@ -176,13 +151,13 @@
   .leo-control.isSmall {
     --leo-icon-size: 16px;
     --font: var(--leo-control-font, var(--leo-font-small-regular));
-    --padding: var(--leo-control-padding, 7px);
+    --padding: var(--leo-control-padding, 8px);
     --gap: var(--leo-control-label-gap, 2px);
   }
 
   .leo-control.isLarge {
     --leo-icon-size: 22px;
-    --padding: var(--leo-control-padding, 14px 11px);
+    --padding: var(--leo-control-padding, 14px 8px);
     --gap: var(--leo-control-label-gap, 12px);
   }
 
@@ -191,31 +166,14 @@
     --shadow-hover: var(--leo-effect-elevation-01);
     --border-color: transparent;
     --border-color-hover: var(--leo-color-divider-subtle);
-
-    @supports (color: color-mix(in srgb, transparent, transparent)) {
-      --background: color-mix(in srgb, var(--primary), var(--foreground) 10%);
-      --border-color-hover: color-mix(
-        in srgb,
-        var(--primary),
-        var(--foreground) 20%
-      );
-    }
   }
 
   .leo-control.isOutline {
-    --background: var(--primary);
+    --background: var(--leo-color-container-background);
+    --background-hover: var();
     --border-color: var(--leo-color-divider-strong);
     --border-color-hover: var(--leo-color-gray-30);
     --shadow-hover: var(--leo-effect-elevation-01);
-
-    @supports (color: color-mix(in srgb, transparent, transparent)) {
-      --border-color: color-mix(in srgb, var(--primary), var(--foreground) 25%);
-      --border-color-hover: color-mix(
-        in srgb,
-        var(--primary),
-        var(--foreground) 40%
-      );
-    }
   }
 
   .leo-control.error {
@@ -254,6 +212,10 @@
     display: flex;
     flex-direction: row;
     gap: var(--leo-spacing-s);
+
+    &:empty {
+      display: none;
+    }
   }
 
   .leo-control .required-indicator {

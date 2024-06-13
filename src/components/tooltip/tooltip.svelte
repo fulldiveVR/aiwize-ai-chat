@@ -6,6 +6,7 @@
 <script lang="ts">
   import type { MiddlewareData, Placement, Strategy } from '@floating-ui/dom'
   import { arrow as arrowMiddleware } from '@floating-ui/dom'
+  import { createEventDispatcher } from 'svelte'
   import { fade } from 'svelte/transition'
   import Floating from '../floating/floating.svelte'
 
@@ -30,13 +31,13 @@
    * after the users mouse leaves the trigger or tooltip*/
   export let fadeDuration: number = 0
 
-  /** Called when the visibility of the tooltip is changed */
-  export let onVisibilityChange: (detail: { visible: boolean }) => void =
-    undefined
-
   // Note: This is separate from the |visible| flag because we want to handle
   // controlled and uncontrolled states for this component.
   $: visibleInternal = visible ?? false
+
+  const dispatch = createEventDispatcher<{
+    visibilitychange: { visible: boolean }
+  }>()
 
   let tooltip: HTMLElement
   let arrow: HTMLElement
@@ -44,18 +45,18 @@
 
   let arrowPlacement: string | undefined = undefined
 
-  function positionArrow(e: {
-    middlewareData: MiddlewareData
-    placement: Placement
-  }) {
-    if (!e.middlewareData.arrow) return
+  function positionArrow(
+    e: CustomEvent<{ middlewareData: MiddlewareData; placement: Placement }>
+  ) {
 
-    const { x: arrowX, y: arrowY } = e.middlewareData.arrow as {
+    if(!e.detail.middlewareData.arrow) return
+
+    const { x: arrowX, y: arrowY } = e.detail.middlewareData.arrow as {
       x?: number
       y?: number
     }
 
-    arrowPlacement = e.placement.split('-')[0]
+    arrowPlacement = e.detail.placement.split('-')[0]
 
     const staticSide =
       {
@@ -111,7 +112,7 @@
     if (newVisible === visible) return
 
     if (visible === undefined) visibleInternal = newVisible
-    onVisibilityChange?.({ visible: newVisible })
+    dispatch('visibilitychange', { visible: newVisible })
   }
 </script>
 
@@ -126,28 +127,26 @@
       {positionStrategy}
       {shift}
       autoUpdate
-      onMouseLeave={handleTooltipMouseleave}
-      onMouseEnter={() => (tooltipHovered = true)}
+      on:mouseleave={handleTooltipMouseleave}
+      on:mouseenter={() => (tooltipHovered = true)}
       middleware={[arrowMiddleware({ padding: 0, element: arrow })]}
-      onComputedPosition={positionArrow}
+      on:computedposition={positionArrow}
     >
-      {#if $$slots.content || text}
-        <div
-          class="tooltip"
-          class:hero={mode === 'hero'}
-          class:info={mode === 'info'}
-          class:mini={mode === 'mini'}
-          transition:fade={{ duration: fadeDuration }}
-          class:default={mode === 'default' || !mode}
-          hidden={!visibleInternal}
-          bind:this={tooltip}
-        >
-          <slot name="content">
-            {text}
-          </slot>
-          <div class={`arrow ${arrowPlacement}`} bind:this={arrow} />
-        </div>
-      {/if}
+      <div
+        class="tooltip"
+        class:hero={mode === 'hero'}
+        class:info={mode === 'info'}
+        class:mini={mode === 'mini'}
+        transition:fade={{ duration: fadeDuration }}
+        class:default={mode === 'default' || !mode}
+        hidden={!visibleInternal}
+        bind:this={tooltip}
+      >
+        <slot name="content">
+          {text}
+        </slot>
+        <div class={`arrow ${arrowPlacement}`} bind:this={arrow} />
+      </div>
     </Floating>
   {/key}
 
@@ -171,7 +170,7 @@
     );
     --text: var(--leo-tooltip-text-color, var(--leo-color-text-primary));
     --shadow: var(--leo-tooltip-shadow, var(--leo-effect-elevation-03));
-    --padding: var(--leo-tooltip-padding, var(--leo-spacing-xl));
+    --padding: var(--leo-tooltip-padding, var(--leo-spacing-2xl));
     --radius: var(--leo-radius-m);
     --border-color: transparent;
     --border-width: 0px;

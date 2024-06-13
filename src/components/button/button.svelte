@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte'
   import type { SvelteHTMLElements } from 'svelte/elements'
   import type * as Props from './props'
   import ProgressRing from '../progress/progressRing.svelte'
@@ -24,22 +25,21 @@
     kind?: Props.ButtonKind
     size?: Props.ButtonSize
     fab?: boolean
-    onClick?: () => void
   }
 
-  type NalaButtonProps = CommonProps &
+  type ButtonProps = CommonProps &
     Omit<Partial<SvelteHTMLElements['button']>, ExcludedProps> & {
       isDisabled?: Disabled
       isLoading?: boolean
       href?: never
     }
 
-  type NalaLinkProps = CommonProps &
+  type LinkProps = CommonProps &
     Omit<Partial<SvelteHTMLElements['a']>, ExcludedProps> & {
       href: Href
     }
 
-  type $$Props = NalaLinkProps | NalaButtonProps
+  type $$Props = LinkProps | ButtonProps
 
   export let kind: Props.ButtonKind = 'filled'
   export let size: Props.ButtonSize = 'medium'
@@ -48,10 +48,18 @@
   export let href: Href = undefined
   export let fab = false
 
-  export let onClick: () => void = undefined
-
   $: tag = href ? 'a' : ('button' as 'a' | 'button')
-  $: disabled = !!(isDisabled || (isDisabled as any) === '')
+
+  const dispatch = createEventDispatcher<{
+    click: {}
+  }>()
+
+  /**
+   * Optional click handler
+   */
+  function onClick(event) {
+    dispatch('click', event)
+  }
 </script>
 
 <svelte:element
@@ -70,22 +78,22 @@
   class:isTiny={size === 'tiny'}
   class:fab
   class:isLoading
-  disabled={isLoading || disabled || undefined}
+  disabled={isLoading || isDisabled || undefined}
   on:click={onClick}
   {...$$restProps}
 >
   {#if isLoading}
-    <div class:content={!fab}>
-      {#if $$slots.loading}
-        <slot name="loading" />
-      {:else if !fab}
+    {#if $$slots.loading}
+      <slot name="loading" />
+    {:else if !fab}
+      <div>
         <slot>Leo Button</slot>
-      {/if}
-    </div>
+      </div>
+    {/if}
     <ProgressRing />
   {:else}
     <slot name="icon-before" />
-    <div class:content={!fab}>
+    <div>
       <slot>Leo Button</slot>
     </div>
     <slot name="icon-after" />
@@ -134,47 +142,25 @@
     --leo-progressring-color: var(--icon-color);
 
     display: flex;
+    gap: var(--icon-gap);
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
     transition:
       background 0.12s ease-in-out,
       var(--default-transition);
     box-shadow: none;
-    border: solid var(--border-width, 1px) var(--border-color, transparent);
+    border: solid var(--border-width, 0px) var(--border-color, transparent);
     border-radius: var(--leo-button-radius, var(--radius));
     background: var(--bg);
     color: var(--color);
     text-decoration: none;
-    padding: var(
-      --leo-button-padding,
-      calc(var(--padding-y) - var(--border-width)) var(--padding-x)
-    );
+    padding: var(--leo-button-padding, var(--padding-y) var(--padding-x));
     max-height: max-content;
 
     &.fab {
       max-width: max-content;
-    }
-
-    .content {
-      padding: 0 var(--icon-gap);
-    }
-
-    /*
-     * Should only be necessary for Tailwind consumers where there's
-     * no guarantee that the button will contain a child element.
-     */
-    &:not(:has(> *)) {
-      padding-left: var(
-        --leo-button-padding,
-        calc(var(--padding-x) + var(--icon-gap))
-      );
-      padding-right: var(
-        --leo-button-padding,
-        calc(var(--padding-x) + var(--icon-gap))
-      );
     }
   }
 
@@ -236,76 +222,64 @@
   // Size Variations
   .leoButton.isTiny {
     font: var(--leo-font-components-button-small);
-    min-height: 28px;
-    --padding-y: var(--leo-spacing-s);
+    --padding-y: 6px;
     --padding-x: var(--leo-spacing-m);
-    --radius: var(--leo-radius-m);
-    --leo-icon-size: var(--leo-icon-xs);
-    --icon-gap: var(--leo-spacing-m);
+    --radius: 14px;
+    --leo-icon-size: 16px;
+    --icon-gap: 8px;
 
     &.fab {
-      min-height: 0;
       --padding-x: 6px;
-      --padding-y: 6px;
     }
   }
   .leoButton.isSmall {
     font: var(--leo-font-components-button-small);
-    min-height: 36px;
-    --padding-y: var(--leo-spacing-m);
-    --padding-x: var(--leo-spacing-l);
-    --radius: var(--leo-radius-m);
-    --leo-icon-size: var(--leo-icon-s);
-    --icon-gap: var(--leo-spacing-m);
+    --padding-y: 8px;
+    --padding-x: 14px;
+    --radius: 18px;
+    --leo-icon-size: 18px;
+    --icon-gap: 8px;
 
     &.fab {
-      min-height: 0;
-      --padding-x: var(--leo-spacing-m);
+      --padding-x: 8px;
     }
   }
   .leoButton.isMedium {
     font: var(--leo-font-components-button-default);
-    min-height: 44px;
-    --padding-y: var(--leo-spacing-l);
-    --padding-x: var(--leo-spacing-xl);
-    --radius: var(--leo-radius-l);
-    --leo-icon-size: var(--leo-icon-m);
-    --icon-gap: var(--leo-spacing-m);
+    --padding-y: 10px;
+    --padding-x: 16px;
+    --radius: 22px;
+    --leo-icon-size: 20px;
+    --icon-gap: 8px;
 
     &.fab {
-      min-height: 0;
-      --padding-x: var(--leo-spacing-l);
-      --padding-y: var(--leo-spacing-l);
+      --padding-x: 12px;
+      --padding-y: 12px;
     }
   }
   .leoButton.isLarge {
     font: var(--leo-font-components-button-large);
-    min-height: 52px;
-    --padding-y: var(--leo-spacing-l);
-    --padding-x: var(--leo-spacing-xl);
-    --radius: var(--leo-radius-xl);
-    --leo-icon-size: var(--leo-icon-m);
+    --padding-y: 15px;
+    --padding-x: 30px;
+    --radius: 26px;
+    --leo-icon-size: 20px;
     --icon-gap: 10px;
 
     &.fab {
-      min-height: 0;
-      --padding-x: var(--leo-spacing-xl);
-      --padding-y: var(--leo-spacing-xl);
+      --padding-x: 15px;
+      --padding-y: 15px;
     }
   }
   .leoButton.isJumbo {
     font: var(--leo-font-components-button-jumbo);
-    min-height: 60px;
-    --padding-y: var(--leo-spacing-xl);
-    --padding-x: var(--leo-spacing-xl);
-    --radius: var(--leo-radius-xl);
-    --leo-icon-size: var(--leo-icon-l);
-    --icon-gap: var(--leo-spacing-l);
+    --padding-y: 18px;
+    --padding-x: 26px;
+    --radius: 30px;
+    --leo-icon-size: 24px;
+    --icon-gap: 12px;
 
     &.fab {
-      min-height: 0;
       --padding-x: 18px;
-      --padding-y: 18px;
     }
   }
 
@@ -320,10 +294,7 @@
   .leoButton.isOutline {
     --bg: transparent;
     --bg-active: --leo-color-gray-20;
-    --primary-color: var(
-      --leo-button-color,
-      var(--leo-color-primitive-primary-60)
-    );
+    --primary-color: var(--leo-button-color, var(--leo-color-primitive-primary-60));
     --color: var(--mixed-primary-color);
     --border-width: 1px;
     --border-color: var(--leo-color-divider-interactive);
@@ -331,10 +302,7 @@
     --border-color-focus: var(--leo-color-divider-interactive);
 
     @theme (dark) {
-      --primary-color: var(
-        --leo-button-color,
-        var(--leo-color-primitive-primary-40)
-      );
+      --primary-color: var(--leo-button-color, var(--leo-color-primitive-primary-40));
       --border-color-hover: var(--leo-color-primitive-primary-60);
     }
 
@@ -353,28 +321,14 @@
     --icon-color: var(--color);
   }
   .leoButton.isPlain {
-    --primary-color: var(
-      --leo-button-color,
-      var(--leo-color-primitive-primary-60)
-    );
+    --radius: 8px;
+    --padding-x: 2px;
+    --primary-color: var(--leo-button-color, var(--leo-color-primitive-primary-60));
     --color: var(--mixed-primary-color);
     --box-shadow-hover: none;
-    --bg-hover-mix: 5%;
 
     @theme (dark) {
-      --primary-color: var(
-        --leo-button-color,
-        var(--leo-color-primitive-primary-40)
-      );
-      --bg-hover-mix: 10%;
-    }
-
-    @supports (color: color-mix(in srgb, transparent, transparent)) {
-      --bg-hover: color-mix(
-        in srgb,
-        var(--primary-color) var(--bg-hover-mix),
-        var(--background)
-      );
+      --primary-color: var(--leo-button-color, var(--leo-color-primitive-primary-40));
     }
 
     &:disabled:not(.isLoading) {
@@ -382,24 +336,18 @@
     }
 
     &.fab {
-      --radius: var(--leo-radius-m);
-      --bg-hover: transparent;
       --padding-y: 0;
       --padding-x: 0;
     }
   }
   .leoButton.isPlainFaint {
-    --foreground: var(--leo-color-black);
+    --radius: 8px;
+    --padding-x: 2px;
+    --foreground: transparent;
     --primary-color: currentColor;
     --color: var(--mixed-primary-color);
     --box-shadow-hover: none;
     --icon-color: var(--mixed-primary-color);
-    --bg-hover-mix: 5%;
-
-    @theme (dark) {
-      --foreground: var(--leo-color-white);
-      --bg-hover-mix: 10%;
-    }
 
     @supports (color: color-mix(in srgb, transparent, transparent)) {
       --icon-color: color-mix(
@@ -407,51 +355,11 @@
         var(--primary-color),
         var(--background) 30%
       );
-
-      --icon-hover-color: color-mix(
-        in srgb,
-        var(--icon-color),
-        var(--foreground) 20%
-      );
-
-      position: relative;
-      z-index: 0;
-
-      // This pseudo-element is frustratingly necessary due to transitions mysteriously not working with our use of currentColor.
-      &::before {
-        content: '';
-        width: 100%;
-        height: 100%;
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        z-index: -1;
-        border-radius: var(--radius);
-        background-color: color-mix(
-          in srgb,
-          var(--primary-color) var(--bg-hover-mix),
-          transparent
-        );
-        transition: var(--default-transition);
-        opacity: 0.001;
-      }
-
-      &:hover::before {
-        opacity: 1;
-      }
     }
 
     &.fab {
-      --radius: var(--leo-radius-m);
-      --bg-hover: transparent;
       --padding-y: 0;
       --padding-x: 0;
-
-      &::before {
-        content: unset;
-      }
     }
   }
   .leoButton.isHero {
@@ -460,7 +368,6 @@
     --bg-focus: var(--bg);
     --bg-disabled: var(--leo-color-button-disabled);
     --color: var(--leo-color-white);
-    --icon-color: var(--leo-color-white);
     --default-bg-opacity: 1;
 
     position: relative;
@@ -490,11 +397,11 @@
       &::after {
         z-index: -2;
         background: linear-gradient(
-            0deg,
-            rgba(0, 0, 0, 0.2) 0%,
-            rgba(0, 0, 0, 0.2) 100%
-          ),
-          linear-gradient(174deg, #f50 2.32%, #f5002d 93.33%);
+          101.5deg,
+          #770eaa 21.56%,
+          #b72070 74.97%,
+          #e6461e 104.58%
+        );
       }
     }
 
@@ -504,6 +411,7 @@
   }
 
   .leoButton.fab {
+    --radius: 10000px;
     aspect-ratio: 1 / 1;
   }
 </style>

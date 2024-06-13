@@ -42,7 +42,7 @@ StyleDictionary.registerTransform({
 })
 StyleDictionary.registerTransform({
   name: 'color/hex8ToRgbPartial',
-  ...require('./colorToRgbPartial')
+  ...require('../common/colorToRgbPartial')
 })
 
 StyleDictionary.registerTransformGroup({
